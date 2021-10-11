@@ -9,10 +9,19 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
+var (
+	bot *tb.Bot
+
+	matches = map[int]*Match{}
+
+	positionsText = []string{"First", "Second", "Third", "Fourth", "Fifth"}
+	numbersEmojis = []NumberType{"0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"}
+	colorEmojis   = []ColorType{"⬜️", "🟨", "🟦", "🟥", "🟩"}
+)
+
 func main() {
 	var (
 		token string
-		bot   *tb.Bot
 		err   error
 	)
 
@@ -27,7 +36,7 @@ func main() {
 		return
 	}
 
-	setupHandlers(bot)
+	setupHandlers()
 
 	fmt.Println("Run bot")
 	bot.Start()
