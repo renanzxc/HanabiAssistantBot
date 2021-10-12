@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -9,17 +8,29 @@ import (
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-type ColorType string
-type NumberType string
+var (
+	// Buttons
+	startMatchBtn    = &tb.Btn{Text: "▶ Start Match"}
+	continueMatchBtn = &tb.Btn{Text: "▶ Continue Match"}
 
-const unknown = "❓"
+	numCardsBtn4        = &tb.Btn{Text: "4"}
+	numCardsBtn5        = &tb.Btn{Text: "5"}
+	selectCardBtn       = &tb.Btn{Unique: "select_card_btn"}
+	addNumberCardBtn    = &tb.Btn{Text: "🔢 Number", Unique: "add_card_number"}
+	addColorCardBtn     = &tb.Btn{Text: "🎨 Color", Unique: "add_card_color"}
+	removeInfoBtn       = &tb.Btn{Text: "❌ Remove Info", Unique: "remove_info"}
+	selectNumberCardBtn = &tb.Btn{Unique: "add_card_number_info"}
+	selectColorCardBtn  = &tb.Btn{Unique: "add_card_color_info"}
+)
 
+// ButtonData contains all data about button
 type ButtonData struct {
 	CardIndex          *int
 	SelectedNumberData *NumberType
 	SelectedColorData  *ColorType
 }
 
+// newButton initialize a new button with the initial values
 func newButton(text, unique string, data ButtonData) *tb.Btn {
 	return &tb.Btn{
 		Text:   text,
@@ -28,16 +39,19 @@ func newButton(text, unique string, data ButtonData) *tb.Btn {
 	}
 }
 
+// ToString convert all button data to string
 func (btn *ButtonData) ToString() (btnDataString string) {
 	syncBtnValues(btn, &btnDataString)
 
 	return
 }
 
+// Parse parse string data to button struct
 func (btn *ButtonData) Parse(btnDataString string) {
 	syncBtnValues(btn, &btnDataString)
 }
 
+// syncBtnValues sync a button data to struct or string
 func syncBtnValues(btnData *ButtonData, btnDataString *string) {
 	var (
 		btnDataArray []string
@@ -79,45 +93,4 @@ func syncBtnValues(btnData *ButtonData, btnDataString *string) {
 	}
 
 	*btnDataString = strings.Join(btnDataArray, "|")
-}
-
-type Card struct {
-	Color  ColorType
-	Number NumberType
-}
-
-func (card *Card) HasAnyInfo() bool {
-	return card.Color != unknown || card.Number != unknown
-}
-
-type Match struct {
-	CardsNumber int
-	Cards       []Card
-	Bot         *tb.Bot
-}
-
-func getCurrentMatch(senderID int) (*Match, bool) {
-	var match, ok = matches[senderID]
-	return match, ok
-}
-
-func (match *Match) ShowCards(sender *tb.User, messageToEdit ...*tb.Message) {
-	selectorCards := match.Bot.NewMarkup()
-
-	for ii := range match.Cards {
-		var btn = newButton(fmt.Sprintf(`🎆 Number: %s Color: %s`, match.Cards[ii].Number, match.Cards[ii].Color), selectCardBtn.Unique, ButtonData{
-			CardIndex: &ii,
-		})
-		selectorCards.InlineKeyboard = append(selectorCards.InlineKeyboard, []tb.InlineButton{*btn.Inline()})
-	}
-
-	if len(messageToEdit) > 0 {
-		if _, err := match.Bot.Edit(messageToEdit[0], "Cards Info:", selectorCards); err != nil {
-			log.Panic(err)
-		}
-	} else {
-		if _, err := match.Bot.Send(sender, "Cards Info:", selectorCards); err != nil {
-			log.Panic(err)
-		}
-	}
 }

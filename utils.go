@@ -3,13 +3,9 @@ package main
 import (
 	"log"
 	"strconv"
-	"strings"
 )
 
-func parseTelegramData(data string) []string {
-	return strings.Split(data, "|")
-}
-
+// ValueToString convert a value to string
 func ValueToString(value interface{}) string {
 	switch value := value.(type) {
 	case *int:
@@ -27,10 +23,7 @@ func ValueToString(value interface{}) string {
 	return ""
 }
 
+// GetIntPointer get a int pointer to value
 func GetIntPointer(value int) *int {
-	return &value
-}
-
-func GetStringPointer(value string) *string {
 	return &value
 }

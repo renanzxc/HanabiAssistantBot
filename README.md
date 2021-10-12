@@ -14,6 +14,6 @@ export HANABI_TOKEN_BOT="YOUR_TOKEN_BOT"
 - [x] Support to 4 or 5 cards
 - [x] Support to add number card info
 - [x] Support to add color card
-- [ ] Support to remove card info
-- [ ] Organize code
+- [x] Support to remove card info
+- [ ] Organize code - In Progress
 - [ ] Add log
