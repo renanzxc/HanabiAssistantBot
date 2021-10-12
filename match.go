@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strconv"
 
 	tb "gopkg.in/tucnak/telebot.v2"
 )
@@ -29,18 +28,15 @@ func selectCard(c *tb.Callback) {
 			infoToAddSelector.Row(infoToAddSelector.Data(addNumberCardBtn.Text, addNumberCardBtn.Unique, c.Data)),
 			infoToAddSelector.Row(infoToAddSelector.Data(addColorCardBtn.Text, addColorCardBtn.Unique, c.Data)),
 		}
+		btnData ButtonData
 	)
-
-	cardIndex, err := strconv.ParseInt(c.Data, 10, 64)
-	if err != nil {
-		log.Panic(err)
-	}
+	btnData.Parse(c.Data)
 
 	if match, matchOK = getCurrentMatch(c.Sender.ID); !matchOK {
 		log.Panic("No match")
 	}
 
-	if match.Cards[cardIndex].HasAnyInfo() {
+	if match.Cards[*btnData.CardIndex].HasAnyInfo() {
 		actionsRows = append(actionsRows, infoToAddSelector.Row(infoToAddSelector.Data(removeInfoBtn.Text, removeInfoBtn.Unique, c.Data)))
 	}
 
@@ -48,37 +44,37 @@ func selectCard(c *tb.Callback) {
 		actionsRows...,
 	)
 
-	bot.Edit(c.Message, "What information do you want to add to "+positionsText[cardIndex]+" Card?", infoToAddSelector)
+	bot.Edit(c.Message, "What information do you want to add to "+positionsText[*btnData.CardIndex]+" Card?", infoToAddSelector)
 	bot.Respond(c, &tb.CallbackResponse{})
 }
 
 func addNumberCard(c *tb.Callback) {
-	cardIndex, err := strconv.ParseInt(c.Data, 10, 64)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	numberInfoSelector := bot.NewMarkup()
+	var (
+		btnData            ButtonData
+		numberInfoSelector = bot.NewMarkup()
+	)
+	btnData.Parse(c.Data)
 
 	for ii := 1; ii <= 5; ii++ {
-		btn := numberInfoSelector.Data(string(numbersEmojis[ii]), selectNumberCardBtn.Unique, c.Data, string(numbersEmojis[ii])).Inline()
+		btnData.SelectedNumberData = &numbersEmojis[ii]
+		btn := newButton(string(numbersEmojis[ii]), selectNumberCardBtn.Unique, btnData).Inline()
+
 		numberInfoSelector.InlineKeyboard = append(numberInfoSelector.InlineKeyboard, []tb.InlineButton{*btn})
 	}
 
-	bot.Edit(c.Message, "What number to add a "+positionsText[cardIndex]+" Card?", numberInfoSelector)
+	bot.Edit(c.Message, "What number to add a "+positionsText[*btnData.CardIndex]+" Card?", numberInfoSelector)
 	bot.Respond(c, &tb.CallbackResponse{})
 }
 
 func selectNumberCard(c *tb.Callback) {
-	var data = parseTelegramData(c.Data)
-	cardIndex, err := strconv.ParseInt(data[0], 10, 64)
-	if err != nil {
-		log.Panic(err)
-	}
+	var (
+		btnData ButtonData
+	)
+	btnData.Parse(c.Data)
 
 	for ii := range numbersEmojis {
-		if numbersEmojis[ii] == NumberType(data[1]) {
-			matches[c.Sender.ID].Cards[cardIndex].Number = numbersEmojis[ii]
+		if numbersEmojis[ii] == NumberType(*btnData.SelectedNumberData) {
+			matches[c.Sender.ID].Cards[*btnData.CardIndex].Number = numbersEmojis[ii]
 			break
 		}
 	}
@@ -88,32 +84,33 @@ func selectNumberCard(c *tb.Callback) {
 }
 
 func addColorCard(c *tb.Callback) {
-	cardIndex, err := strconv.ParseInt(c.Data, 10, 64)
-	if err != nil {
-		log.Panic(err)
-	}
+	var (
+		btnData ButtonData
+	)
+	btnData.Parse(c.Data)
 
 	colorInfoSelector := bot.NewMarkup()
 
 	for ii := 0; ii < len(colorEmojis); ii++ {
-		btn := colorInfoSelector.Data(string(colorEmojis[ii]), selectColorCardBtn.Unique, c.Data, string(colorEmojis[ii])).Inline()
+		btnData.SelectedColorData = &colorEmojis[ii]
+		btn := newButton(string(colorEmojis[ii]), selectColorCardBtn.Unique, btnData).Inline()
+
 		colorInfoSelector.InlineKeyboard = append(colorInfoSelector.InlineKeyboard, []tb.InlineButton{*btn})
 	}
 
-	bot.Edit(c.Message, "What color to add a "+positionsText[cardIndex]+" Card?", colorInfoSelector)
+	bot.Edit(c.Message, "What color to add a "+positionsText[*btnData.CardIndex]+" Card?", colorInfoSelector)
 	bot.Respond(c, &tb.CallbackResponse{})
 }
 
 func selectColorCard(c *tb.Callback) {
-	var data = parseTelegramData(c.Data)
-	cardIndex, err := strconv.ParseInt(data[0], 10, 64)
-	if err != nil {
-		log.Panic(err)
-	}
+	var (
+		btnData ButtonData
+	)
+	btnData.Parse(c.Data)
 
 	for ii := range numbersEmojis {
-		if colorEmojis[ii] == ColorType(data[1]) {
-			matches[c.Sender.ID].Cards[cardIndex].Color = colorEmojis[ii]
+		if colorEmojis[ii] == ColorType(*btnData.SelectedColorData) {
+			matches[c.Sender.ID].Cards[*btnData.CardIndex].Color = colorEmojis[ii]
 			break
 		}
 	}
@@ -123,13 +120,11 @@ func selectColorCard(c *tb.Callback) {
 }
 
 func removeInfoCard(c *tb.Callback) {
-	cardIndex, err := strconv.ParseInt(c.Data, 10, 64)
-	if err != nil {
-		log.Panic(err)
-	}
+	var btnData ButtonData
+	btnData.Parse(c.Data)
 
 	var match = matches[c.Sender.ID]
-	match.Cards[cardIndex] = newCard()
+	match.Cards[*btnData.CardIndex] = newCard()
 
 	match.ShowCards(c.Sender, c.Message)
 	bot.Respond(c, &tb.CallbackResponse{})
